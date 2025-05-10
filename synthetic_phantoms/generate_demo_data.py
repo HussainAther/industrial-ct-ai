@@ -9,13 +9,16 @@ import numpy as np
 import gzip
 import shutil
 import requests
+import json
 
 DATA_DIR = "./synthetic_phantoms/demo_data"
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 OUTPUT_DIR = os.path.join(DATA_DIR, "images")
+LABELS_DIR = os.path.join(DATA_DIR, "labels")
 
 os.makedirs(RAW_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(LABELS_DIR, exist_ok=True)
 
 # 1. Download Phantom Files (Header + Raw Data)
 def download_phantom():
@@ -37,6 +40,7 @@ def download_phantom():
     return files
 
 # 2. Decompress .raw.gz
+
 def decompress_raw_gz(gz_path, out_path):
     print("📂 Decompressing raw.gz file...")
     with gzip.open(gz_path, 'rb') as f_in:
@@ -44,15 +48,33 @@ def decompress_raw_gz(gz_path, out_path):
             shutil.copyfileobj(f_in, f_out)
     print("✅ Decompression complete.")
 
-# 3. Simulate acoustic property maps
+# 3. Simulate acoustic property maps and annotations
+
 def generate_synthetic_image():
-    print("🧠 Generating synthetic image with fake defect...")
+    print("🧠 Generating synthetic image with fake defect and annotation...")
     img = np.zeros((256, 256), dtype=np.float32)
     cv2 = __import__('cv2')
     cv2.circle(img, (128, 128), 80, 0.4, -1)
-    cv2.rectangle(img, (90, 140), (120, 170), 0.9, -1)  # Simulated defect
-    plt.imsave(os.path.join(OUTPUT_DIR, "synthetic_defect.png"), img, cmap='gray')
-    print("✅ Synthetic image saved.")
+    # Simulated defect
+    top_left = (90, 140)
+    bottom_right = (120, 170)
+    cv2.rectangle(img, top_left, bottom_right, 0.9, -1)
+
+    # Save image
+    img_path = os.path.join(OUTPUT_DIR, "synthetic_defect.png")
+    plt.imsave(img_path, img, cmap='gray')
+
+    # Create annotation in YOLO-style format
+    x_center = (top_left[0] + bottom_right[0]) / 2 / 256
+    y_center = (top_left[1] + bottom_right[1]) / 2 / 256
+    width = (bottom_right[0] - top_left[0]) / 256
+    height = (bottom_right[1] - top_left[1]) / 256
+
+    label_path = os.path.join(LABELS_DIR, "synthetic_defect.txt")
+    with open(label_path, 'w') as f:
+        f.write(f"0 {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
+
+    print("✅ Synthetic image and label saved.")
 
 # Main execution
 if __name__ == "__main__":
