@@ -1,0 +1,19 @@
+# Core packages
+numpy
+matplotlib
+opencv-python
+pillow
+scipy
+scikit-image
+requests
+
+# Streamlit dashboard
+streamlit
+
+# AI Inference
+onnxruntime
+ultralytics
+
+# Optional dev tools
+tqdm
+
